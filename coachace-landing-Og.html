@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Coach Ace — Board Exam Flashcards, Anki Decks &amp; Telegram Reviewers</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#F7F2E7;
+    --paper-line:#DED3BC;
+    --ink:#1B2A4A;
+    --ink-soft:#3D5A80;
+    --graphite:#2B2B28;
+    --amber:#DFA22E;
+    --stamp:#AE3B34;
+    --correct:#3F7A5E;
+    --card:#FFFDF8;
+    --radius:2px;
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0;
+    background:var(--paper);
+    color:var(--graphite);
+    font-family:'IBM Plex Sans',sans-serif;
+    line-height:1.55;
+    background-image:
+      linear-gradient(var(--paper-line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--paper-line) 1px, transparent 1px);
+    background-size:28px 28px;
+  }
+  a{color:inherit;}
+  :focus-visible{outline:3px solid var(--amber); outline-offset:2px;}
+  h1,h2,h3{font-family:'Space Grotesk',sans-serif; margin:0; color:var(--ink);}
+  .mono{font-family:'IBM Plex Mono',monospace;}
+  .wrap{max-width:1080px; margin:0 auto; padding:0 24px;}
+
+  /* ---------- NAV ---------- */
+  nav{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:20px 24px; max-width:1080px; margin:0 auto;
+  }
+  .brand{display:flex; align-items:center; gap:10px; font-family:'Space Grotesk'; font-weight:700; font-size:1.15rem; color:var(--ink);}
+  .brand .dot{width:10px; height:10px; background:var(--stamp); border-radius:50%; display:inline-block;}
+  .navcta{
+    font-family:'IBM Plex Mono'; font-size:.85rem; text-decoration:none;
+    border:1.5px solid var(--ink); padding:8px 16px; border-radius:var(--radius);
+    color:var(--ink);
+  }
+  .navcta:hover{background:var(--ink); color:var(--paper);}
+
+  /* ---------- HERO ---------- */
+  .hero{padding:48px 0 20px;}
+  .eyebrow{
+    font-family:'IBM Plex Mono'; font-size:.8rem; letter-spacing:.14em;
+    text-transform:uppercase; color:var(--stamp); font-weight:600;
+    display:flex; align-items:center; gap:10px; margin-bottom:18px;
+  }
+  .eyebrow::before{content:""; width:26px; height:1px; background:var(--stamp);}
+  .hero h1{
+    font-size:clamp(2.3rem, 5.4vw, 4rem);
+    font-weight:700; letter-spacing:-.01em; max-width:15ch;
+  }
+  .hero h1 em{
+    font-style:normal; color:var(--stamp);
+    text-decoration:underline; text-decoration-style:wavy;
+    text-decoration-color:var(--amber); text-underline-offset:6px;
+  }
+  .hero p.lede{
+    max-width:52ch; font-size:1.08rem; color:var(--ink-soft); margin-top:18px;
+  }
+  .hero-ctas{display:flex; flex-wrap:wrap; gap:14px; margin-top:30px;}
+  .btn{
+    font-family:'IBM Plex Mono'; font-size:.9rem; font-weight:600;
+    padding:13px 22px; border-radius:var(--radius); text-decoration:none;
+    display:inline-block; border:1.5px solid var(--ink); transition:transform .12s ease;
+  }
+  .btn:hover{transform:translateY(-2px);}
+  .btn-solid{background:var(--ink); color:var(--paper);}
+  .btn-solid:hover{background:var(--stamp); border-color:var(--stamp);}
+  .btn-outline{background:transparent; color:var(--ink);}
+  .btn-outline:hover{background:var(--ink); color:var(--paper);}
+
+  /* stamps row */
+  .stamps{display:flex; flex-wrap:wrap; gap:16px; margin-top:40px;}
+  .stamp{
+    width:76px; height:76px; border-radius:50%;
+    border:2px dashed var(--stamp); color:var(--stamp);
+    display:flex; align-items:center; justify-content:center;
+    font-family:'IBM Plex Mono'; font-weight:700; font-size:.82rem;
+    transform:rotate(var(--r,-6deg)); opacity:.9; flex-shrink:0;
+    background:rgba(174,59,52,.03);
+  }
+  .stamp:nth-child(1){--r:-7deg;}
+  .stamp:nth-child(2){--r:5deg;}
+  .stamp:nth-child(3){--r:-4deg;}
+  .stamp:nth-child(4){--r:8deg;}
+  .stamp:nth-child(5){--r:-9deg;}
+
+  /* ---------- ANSWER SHEET SIGNATURE ---------- */
+  .sheet{
+    margin-top:56px; background:var(--card); border:1.5px solid var(--ink);
+    border-radius:var(--radius); padding:26px 24px 22px;
+    box-shadow:6px 6px 0 rgba(27,42,74,.09);
+  }
+  .sheet-head{
+    display:flex; justify-content:space-between; align-items:baseline;
+    font-family:'IBM Plex Mono'; font-size:.75rem; color:var(--ink-soft);
+    letter-spacing:.06em; text-transform:uppercase; margin-bottom:16px;
+    border-bottom:1px dashed var(--paper-line); padding-bottom:12px;
+  }
+  .rows{display:flex; flex-direction:column; gap:10px;}
+  .row{display:flex; align-items:center; gap:14px;}
+  .qnum{font-family:'IBM Plex Mono'; font-size:.78rem; color:var(--ink-soft); width:20px;}
+  .bubbles{display:flex; gap:10px;}
+  .bubble{
+    width:20px; height:20px; border-radius:50%;
+    border:1.6px solid var(--ink); position:relative; flex-shrink:0;
+  }
+  .bubble.filled{
+    animation:fillIn .35s ease forwards;
+    animation-delay:calc(var(--i) * 140ms + 300ms);
+  }
+  @keyframes fillIn{
+    0%{background:transparent; transform:scale(1);}
+    55%{transform:scale(1.18);}
+    100%{background:var(--ink); transform:scale(1);}
+  }
+  .sheet-caption{
+    margin-top:18px; font-size:.92rem; color:var(--ink-soft);
+    border-top:1px dashed var(--paper-line); padding-top:14px;
+  }
+  @media (prefers-reduced-motion: reduce){
+    .bubble.filled{animation:none; background:var(--ink);}
+  }
+
+  /* ---------- SECTION SCAFFOLD ---------- */
+  section{padding:76px 0;}
+  .section-head{max-width:56ch; margin-bottom:44px;}
+  .section-head .eyebrow{margin-bottom:12px;}
+  .section-head h2{font-size:clamp(1.7rem,3.4vw,2.4rem);}
+  .section-head p{color:var(--ink-soft); margin-top:12px;}
+
+  .torn{
+    border-top:1px dashed var(--paper-line);
+    position:relative;
+  }
+  .torn::before{
+    content:"ANSWER KEY";
+    position:absolute; top:-11px; left:50%; transform:translateX(-50%);
+    background:var(--paper); padding:0 14px;
+    font-family:'IBM Plex Mono'; font-size:.68rem; letter-spacing:.12em;
+    color:var(--paper-line);
+  }
+
+  /* ---------- WHAT YOU GET ---------- */
+  .cards{display:grid; grid-template-columns:repeat(3,1fr); gap:22px;}
+  .card{
+    background:var(--card); border:1.5px solid var(--ink); border-radius:var(--radius);
+    padding:26px 22px; box-shadow:5px 5px 0 rgba(27,42,74,.08);
+  }
+  .card .num{font-family:'IBM Plex Mono'; color:var(--stamp); font-size:.8rem; font-weight:600;}
+  .card h3{font-size:1.15rem; margin-top:10px;}
+  .card p{color:var(--ink-soft); font-size:.94rem; margin-top:8px;}
+  .card ul{margin:14px 0 0; padding-left:18px; color:var(--graphite); font-size:.9rem;}
+  .card li{margin-bottom:5px;}
+
+  /* ---------- DISCIPLINES ---------- */
+  .disc-grid{display:grid; grid-template-columns:repeat(5,1fr); gap:16px;}
+  .disc{
+    border:1.5px solid var(--ink-soft); border-radius:var(--radius);
+    padding:18px 14px; text-align:center; background:var(--card);
+  }
+  .disc .tag{
+    font-family:'IBM Plex Mono'; font-weight:700; color:var(--ink);
+    font-size:1.05rem; letter-spacing:.02em;
+  }
+  .disc .full{font-size:.78rem; color:var(--ink-soft); margin-top:6px; display:block;}
+
+  /* ---------- PRICING ---------- */
+  .price-grid{display:grid; grid-template-columns:repeat(4,1fr); gap:16px;}
+  .price{
+    border:1.5px solid var(--ink); border-radius:var(--radius); background:var(--card);
+    padding:22px 18px; text-align:center; position:relative;
+  }
+  .price.featured{border-color:var(--stamp); box-shadow:5px 5px 0 rgba(174,59,52,.14);}
+  .price.featured::before{
+    content:"BOARD DAY"; position:absolute; top:-11px; left:50%; transform:translateX(-50%);
+    background:var(--stamp); color:var(--paper); font-family:'IBM Plex Mono'; font-size:.62rem;
+    letter-spacing:.1em; padding:3px 10px; border-radius:20px;
+  }
+  .price .tier{font-family:'IBM Plex Mono'; font-size:.78rem; letter-spacing:.1em; color:var(--ink-soft);}
+  .price .amount{font-family:'Space Grotesk'; font-weight:700; font-size:1.6rem; color:var(--ink); margin-top:8px;}
+  .price .amount span{font-size:.9rem; color:var(--ink-soft); font-weight:500;}
+
+  /* ---------- AFFILIATE ---------- */
+  .affiliate{
+    background:var(--card); border:1.5px solid var(--ink); border-radius:var(--radius);
+    padding:30px; display:grid; grid-template-columns:1.1fr 1fr; gap:32px;
+  }
+  .affiliate h3{font-size:1.3rem;}
+  .affiliate table{width:100%; border-collapse:collapse; margin-top:16px; font-size:.9rem;}
+  .affiliate th{
+    font-family:'IBM Plex Mono'; font-size:.72rem; letter-spacing:.08em; text-transform:uppercase;
+    text-align:left; color:var(--ink-soft); padding-bottom:8px; border-bottom:1px solid var(--ink);
+  }
+  .affiliate td{padding:8px 0; border-bottom:1px dashed var(--paper-line);}
+  .affiliate td.cut{font-family:'IBM Plex Mono'; color:var(--correct); font-weight:600; text-align:right;}
+  .affiliate .bonus{margin-top:18px; font-size:.88rem; color:var(--ink-soft);}
+  .affiliate .bonus li{margin-bottom:4px;}
+  .affiliate-side{display:flex; flex-direction:column; justify-content:space-between;}
+  .affiliate-side ul{padding-left:18px; font-size:.9rem; color:var(--graphite);}
+  .affiliate-side li{margin-bottom:6px;}
+  .affiliate-contact{
+    margin-top:18px; font-family:'IBM Plex Mono'; font-size:.85rem;
+    background:var(--paper); border:1px dashed var(--ink-soft); border-radius:var(--radius);
+    padding:14px;
+  }
+  .affiliate-contact a{color:var(--stamp); font-weight:600; text-decoration:none;}
+  .affiliate-contact a:hover{text-decoration:underline;}
+
+  /* ---------- FREE TRIAL ---------- */
+  .trial-grid{display:grid; grid-template-columns:1fr 1fr; gap:22px;}
+  .trial-card{
+    background:var(--card); border:1.5px solid var(--ink); border-radius:var(--radius);
+    padding:26px 24px; box-shadow:5px 5px 0 rgba(27,42,74,.08);
+  }
+  .trial-card .badge{
+    font-family:'IBM Plex Mono'; font-size:.72rem; letter-spacing:.1em; color:var(--stamp);
+    border:1px dashed var(--stamp); display:inline-block; padding:4px 10px; border-radius:20px;
+  }
+  .trial-card h3{font-size:1.2rem; margin-top:12px;}
+  .trial-card p{color:var(--ink-soft); font-size:.9rem; margin-top:8px;}
+  .trial-card .steps{
+    margin-top:16px; padding-top:14px; border-top:1px dashed var(--paper-line);
+    font-size:.86rem; color:var(--graphite);
+  }
+  .trial-card .steps li{margin-bottom:5px;}
+  .trial-card .btn{margin-top:16px; width:100%; text-align:center;}
+  .trial-card .telegram-hint{
+    margin-top:10px; font-family:'IBM Plex Mono'; font-size:.78rem; color:var(--ink-soft); text-align:center;
+  }
+
+  @media (max-width:760px){
+    .trial-grid{grid-template-columns:1fr;}
+  }
+
+  /* ---------- FOOTER CTA ---------- */
+  .final{
+    text-align:center; padding:70px 24px 90px;
+  }
+  .final h2{font-size:clamp(1.8rem,4vw,2.6rem); max-width:22ch; margin:0 auto;}
+  .final p{color:var(--ink-soft); max-width:48ch; margin:16px auto 30px;}
+  .final .hero-ctas{justify-content:center;}
+  footer{
+    border-top:1.5px solid var(--ink); padding:22px 24px; text-align:center;
+    font-family:'IBM Plex Mono'; font-size:.78rem; color:var(--ink-soft);
+  }
+
+  @media (max-width:860px){
+    .cards{grid-template-columns:1fr;}
+    .disc-grid{grid-template-columns:repeat(2,1fr);}
+    .price-grid{grid-template-columns:repeat(2,1fr);}
+    .affiliate{grid-template-columns:1fr;}
+  }
+  @media (max-width:520px){
+    .price-grid{grid-template-columns:1fr;}
+  }
+  @media (max-width:600px){
+    .stamps{gap:10px;}
+    .stamp{width:64px; height:64px; font-size:.72rem;}
+    .row{flex-wrap:wrap;}
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="brand"><span class="dot"></span>COACH ACE</div>
+  <a class="navcta" href="#trial">Free 7-day trial →</a>
+</nav>
+
+<header class="hero wrap">
+  <div class="eyebrow">PRC Board Exam Review · Self-Study Toolkit</div>
+  <h1>Shade the <em>right</em> answer, every single day.</h1>
+  <p class="lede">Flashcard ebooks, AnkiDroid-ready CSV decks, and Telegram reviewer bots built for ME, CE, Architecture, REE, and ECE board takers who study on their phone, not a laptop.</p>
+
+  <div class="hero-ctas">
+    <a class="btn btn-solid" href="https://t.me/CoachAceBot" target="_blank" rel="noopener">Try CoachAceNextGen2.0 on Telegram</a>
+    <a class="btn btn-outline" href="#ebook-gate">Get the flashcard ebook</a>
+  </div>
+
+  <div class="stamps">
+    <div class="stamp">ME</div>
+    <div class="stamp">CE</div>
+    <div class="stamp">ARCH</div>
+    <div class="stamp">REE</div>
+    <div class="stamp">ECE</div>
+  </div>
+
+  <div class="sheet" aria-hidden="true">
+    <div class="sheet-head"><span>Daily set — 6 items</span><span>No. 2 pencil not required</span></div>
+    <div class="rows">
+      <!-- each row: 4 bubbles, one filled -->
+      <div class="row"><span class="qnum">1</span><div class="bubbles">
+        <div class="bubble filled" style="--i:0"></div><div class="bubble"></div><div class="bubble"></div><div class="bubble"></div>
+      </div></div>
+      <div class="row"><span class="qnum">2</span><div class="bubbles">
+        <div class="bubble"></div><div class="bubble filled" style="--i:1"></div><div class="bubble"></div><div class="bubble"></div>
+      </div></div>
+      <div class="row"><span class="qnum">3</span><div class="bubbles">
+        <div class="bubble"></div><div class="bubble"></div><div class="bubble"></div><div class="bubble filled" style="--i:2"></div>
+      </div></div>
+      <div class="row"><span class="qnum">4</span><div class="bubbles">
+        <div class="bubble filled" style="--i:3"></div><div class="bubble"></div><div class="bubble"></div><div class="bubble"></div>
+      </div></div>
+      <div class="row"><span class="qnum">5</span><div class="bubbles">
+        <div class="bubble"></div><div class="bubble"></div><div class="bubble filled" style="--i:4"></div><div class="bubble"></div>
+      </div></div>
+      <div class="row"><span class="qnum">6</span><div class="bubbles">
+        <div class="bubble"></div><div class="bubble filled" style="--i:5"></div><div class="bubble"></div><div class="bubble"></div>
+      </div></div>
+    </div>
+    <div class="sheet-caption">This is the whole method: one shaded set a day, repeated with spaced review, until the formula stops needing a second thought.</div>
+  </div>
+</header>
+
+<section class="wrap torn" id="get">
+  <div class="section-head" style="margin-top:44px;">
+    <div class="eyebrow">What's in the set</div>
+    <h2>Three formats, one review system</h2>
+    <p>Same question bank, packaged for however you actually study — on the jeep, between shifts, or drilling on a desk.</p>
+  </div>
+
+  <div class="cards">
+    <div class="card">
+      <span class="num">01 / EBOOK · FREE</span>
+      <h3>Flashcard eBook (PDF)</h3>
+      <p>Print-ready or read on-screen. Front-and-back cards, organized by topic and difficulty.</p>
+      <ul>
+        <li>One PDF per discipline</li>
+        <li>Formula sheets at the back of each chapter</li>
+        <li>Works offline, no app required</li>
+      </ul>
+      <a class="btn btn-outline" style="margin-top:14px; padding:10px 18px; font-size:.82rem;" href="#ebook-gate">Unlock free copy →</a>
+    </div>
+    <div class="card">
+      <span class="num">02 / ANKI</span>
+      <h3>AnkiDroid CSV decks</h3>
+      <p>Import straight into AnkiDroid for spaced repetition — the same cards, scheduled so you forget less.</p>
+      <ul>
+        <li>Plain CSV, tagged by topic</li>
+        <li>Cloze and basic card types included</li>
+        <li>Free app, syncs across devices</li>
+      </ul>
+    </div>
+    <div class="card" id="bots">
+      <span class="num">03 / BOT</span>
+      <h3>CoachAceNextGen2.0 on Telegram</h3>
+      <p>Timed quizzes, streaks, and progress tracking. Free LITE tier to start, upgrade for more sets and features.</p>
+      <ul>
+        <li>Runs on a schedule you set</li>
+        <li>Tracks weak topics over time</li>
+        <li>LITE ₱99 · PLUS ₱199 · PRO ₱399 · BOARD DAY ₱799</li>
+      </ul>
+      <a class="btn btn-outline" style="margin-top:14px; padding:10px 18px; font-size:.82rem;" href="https://t.me/CoachAceBot" target="_blank" rel="noopener">Open @CoachAceBot →</a>
+    </div>
+  </div>
+</section>
+
+<section class="wrap torn" id="ebook-gate">
+  <div class="section-head">
+    <div class="eyebrow">Free download</div>
+    <h2>One form, then the eBook is yours</h2>
+    <p>Tell us where to send it — the download link shows up as soon as you submit.</p>
+  </div>
+
+  <div class="trial-card" style="max-width:520px;">
+    <span class="badge">FREE · NO CARD NEEDED</span>
+    <h3>Flashcard eBook (PDF)</h3>
+    <p>Covers ME, CE, ARCH, REE, and ECE fundamentals, with formula sheets per chapter. Print-ready or read on-screen, works offline.</p>
+    <a class="btn btn-solid" href="https://docs.google.com/forms/d/e/YOUR_EBOOK_FORM_ID/viewform" target="_blank" rel="noopener">Get the free eBook →</a>
+    <p class="telegram-hint">Fill in your name and email — the download link is on the confirmation page.</p>
+  </div>
+</section>
+
+<section class="wrap torn">
+  <div class="section-head">
+    <div class="eyebrow">Coverage</div>
+    <h2>Five board programs, kept current</h2>
+    <p>Question banks are reviewed against the latest PRC syllabus for each program.</p>
+  </div>
+  <div class="disc-grid">
+    <div class="disc"><span class="tag">ME</span><span class="full">Mechanical Engineering</span></div>
+    <div class="disc"><span class="tag">CE</span><span class="full">Civil Engineering</span></div>
+    <div class="disc"><span class="tag">ARCH</span><span class="full">Architecture</span></div>
+    <div class="disc"><span class="tag">REE</span><span class="full">Registered Electrical Engineer</span></div>
+    <div class="disc"><span class="tag">ECE</span><span class="full">Electronics Engineering</span></div>
+  </div>
+</section>
+
+<section class="wrap torn" id="trial">
+  <div class="section-head">
+    <div class="eyebrow">Free 7-day trial</div>
+    <h2>Try the bot before you pay for it</h2>
+    <p>Fill out the short form for your discipline and we'll send your Telegram access link right away.</p>
+  </div>
+
+  <div class="trial-grid">
+    <div class="trial-card">
+      <span class="badge">CE / ME</span>
+      <h3>CoachAceNextGen2.0</h3>
+      <p>Civil and Mechanical Engineering board review, shared bot with subject-aware questions.</p>
+      <a class="btn btn-solid" href="https://docs.google.com/forms/d/1vQnnzOEE1T0kWjtWkdflA89nuEcurcKr58oYCkUysog/viewform" target="_blank" rel="noopener">Start CE/ME free trial →</a>
+      <p class="telegram-hint">Bot: t.me/CoachAceBot</p>
+    </div>
+    <div class="trial-card">
+      <span class="badge">ARCHITECTURE</span>
+      <h3>ArkiAce</h3>
+      <p>Architecture licensure board review, same trial flow, its own dedicated bot.</p>
+      <a class="btn btn-solid" href="https://docs.google.com/forms/d/1__X-ZYlXiKWRrSQL53WUGG1K3LsIp0G3MoRaMoKpsTw/viewform" target="_blank" rel="noopener">Start Arki free trial →</a>
+      <p class="telegram-hint">Bot: t.me/ArkiAce_bot</p>
+    </div>
+    <div class="trial-card">
+      <span class="badge">REE · DISCORD</span>
+      <h3>CoachAcePH</h3>
+      <p>Registered Electrical Engineer board review, on Discord. Message the bot directly to start your trial.</p>
+      <a class="btn btn-solid" href="https://discord.gg/HWtCnGRx5" target="_blank" rel="noopener">Join the Discord server →</a>
+      <p class="telegram-hint">Bot: @CoachAcePHBot (Discord)</p>
+    </div>
+    <div class="trial-card">
+      <span class="badge">ECE · DISCORD</span>
+      <h3>CoachAcePH</h3>
+      <p>Electronics Engineering board review, on Discord. Message the bot directly to start your trial.</p>
+      <a class="btn btn-solid" href="https://discord.gg/HWtCnGRx5" target="_blank" rel="noopener">Join the Discord server →</a>
+      <p class="telegram-hint">Bot: @CoachAcePHBot (Discord)</p>
+    </div>
+  </div>
+  <p class="telegram-hint" style="margin-top:20px;">Questions about your trial? CE/ME/Arki admin (Telegram): <a href="https://t.me/C04ch4c3" target="_blank" rel="noopener" style="color:var(--stamp); font-weight:600;">@C04ch4c3</a> · REE/ECE admin (Discord): <span style="color:var(--stamp); font-weight:600;">@c04ch_ace</span></p>
+</section>
+
+<section class="wrap torn" id="pricing">
+  <div class="section-head">
+    <div class="eyebrow">CoachAceNextGen2.0 · Telegram</div>
+    <h2>Pick a plan, keep the streak going</h2>
+    <p>Upgrade any time from inside the bot. BOARD DAY is built for the final stretch before your exam date.</p>
+  </div>
+  <div class="price-grid">
+    <div class="price"><div class="tier">LITE</div><div class="amount">₱99</div></div>
+    <div class="price"><div class="tier">PLUS</div><div class="amount">₱199</div></div>
+    <div class="price"><div class="tier">PRO</div><div class="amount">₱399</div></div>
+    <div class="price featured"><div class="tier">BOARD DAY</div><div class="amount">₱799</div></div>
+  </div>
+</section>
+
+<section class="wrap torn" id="affiliate">
+  <div class="section-head">
+    <div class="eyebrow">Affiliate program · 20% commission</div>
+    <h2>Refer students, get paid weekly</h2>
+    <p>Anyone with a network of CE/ME students can join — no quotas, work at your own pace.</p>
+  </div>
+  <div class="affiliate">
+    <div>
+      <h3>Your cut per sale</h3>
+      <table>
+        <thead><tr><th>Plan</th><th>Price</th><th>Your cut</th></tr></thead>
+        <tbody>
+          <tr><td>LITE</td><td>₱99</td><td class="cut">₱19.80</td></tr>
+          <tr><td>PLUS</td><td>₱199</td><td class="cut">₱39.80</td></tr>
+          <tr><td>PRO</td><td>₱399</td><td class="cut">₱79.80</td></tr>
+          <tr><td>BOARD DAY</td><td>₱799</td><td class="cut">₱159.80</td></tr>
+        </tbody>
+      </table>
+      <ul class="bonus">
+        <li>6–10 sales/mo → +₱100 bonus</li>
+        <li>11–20 sales/mo → +₱300 bonus</li>
+        <li>21+ sales/mo → +₱500 bonus</li>
+      </ul>
+    </div>
+    <div class="affiliate-side">
+      <ul>
+        <li>Get your referral link with <span class="mono">/referral</span> inside @CoachAceBot</li>
+        <li>Share it with students, Facebook groups, Telegram channels</li>
+        <li>Payouts weekly (Fridays) or monthly (1st), ₱100 minimum</li>
+        <li>Paid via GCash, Maya, or bank transfer</li>
+      </ul>
+      <div class="affiliate-contact">
+        Sign up: <a href="https://t.me/C04ch4c3" target="_blank" rel="noopener">@C04ch4c3</a> on Telegram<br>
+        or email <a href="mailto:b04rd3x4ms@gmail.com">b04rd3x4ms@gmail.com</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="final wrap">
+  <h2>Your next set is already shaded in. Come fill it.</h2>
+  <p>Pick a discipline, download the deck, and start today's six — or earn 20% referring students who do.</p>
+  <div class="hero-ctas">
+    <a class="btn btn-solid" href="https://t.me/CoachAceBot" target="_blank" rel="noopener">Message @CoachAceBot</a>
+    <a class="btn btn-outline" href="#ebook-gate">Get the flashcard ebook</a>
+    <a class="btn btn-outline" href="#affiliate">Become an affiliate</a>
+  </div>
+</section>
+
+<footer>COACH ACE — PRC BOARD EXAM REVIEW · ME · CE · ARCH · REE · ECE</footer>
+
+</body>
+</html>
